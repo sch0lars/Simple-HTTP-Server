@@ -56,6 +56,13 @@ if (args.indexOf('-d') > -1 || args.indexOf('--directory') > -1) {
 }
     
 http.createServer((req, res) => {
+    // Ignore requests for the favicon.ico file
+    if (req.url === '/favicon.ico') {
+	res.statusCode = 204; // No content
+	res.end();
+	return; // This return statement exits the function for favicon.ico requests
+    }
+    
     // This will create the path for the files
     const filePath = path.join(servingDirectory, req.url);
 
@@ -125,34 +132,57 @@ http.createServer((req, res) => {
                 // Get the MIME type for the file based on the file extension
                 var contentType;
                 switch(path.extname(filePath)) {
+		case 'bin':
+		    contentType = 'application/octet-stream';
+		    break;
+		case 'bz':
+		    contentType = 'application/x-bzip';
+		    break;
+		case 'gif':
+		    contentType = 'image/gif';
+		    break;
+		case 'gz':
+		    contentType = 'application/gzip';
+		    break;
+		case 'html':
+		    contentType = 'text/html';
+		    break;
+		case 'jar':
+		    contentType = 'application/java-archive';
+		    break;
                 case '.tar.gz':
                     contentType = 'application/x-gzip';
                     break;
                 default:
                     contentType = 'text/plain';
                 }
+		// Create a file stream for the file
+		const fileStream = fs.createReadStream(filePath);
+		// Handle errors, such as file not found
+		fileStream.on('error', (err) => {
+		    if (err.code === 'ENOENT') {
+			const errorCode = 404
+			res.statusCode = errorCode;
+			res.end('File not found');
+			// Log the error
+			console.log(`[ERROR]\t\t${timestamp}\tHTTP/${httpResponseVersion} ${errorCode} ${err.message}`);
+		    } else {
+			const errorCode = 500
+			res.statusCode = errorCode;
+			res.end('Internal Server Error');
+			// Log the error
+			console.log(`[ERROR]\t\t${timestamp}\tHTTP/${httpResponseVersion} ${errorCode} ${err.message}`);
+		    }
+		});
                 // Set the appropriate content type in the response
                 res.writeHead(200, {
                     'Content-Type': contentType
                 });
-                // Read the file data and serve it in the response
-                fs.readFile(filePath, (err, data) => {
-		    // Handle any errors
-                    if (err) {
-			const errorCode = err.statusCode ?? 500;
-                        res.writeHead(500, {
-                            'Content-Type': 'text/plain'
-                        });
-                        res.end('Internal Server Error');
-			// Log the error
-			httpResponseVersion = httpRequestVersion ?? 1.1;
-			console.log(`[ERROR]\t\t${timestamp}\tHTTP/${httpResponseVersion} ${errorCode} ${err.message}`);
-                    } else { // If there are no errors, serve the file
-                        res.end(data);
-			// Log the response
-			console.log(`[RESPONSE]\t${timestamp}\tHTTP/${httpRequestVersion} 200 OK`)
-                    }
-                });
+
+		// Pipe the file stream to the response stream
+		fileStream.pipe(res);
+		// Log the response
+		console.log(`[RESPONSE]\t${timestamp}\tHTTP/${httpRequestVersion} 200 OK`)
             }
         }
     });
