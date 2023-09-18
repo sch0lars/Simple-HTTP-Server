@@ -64,8 +64,8 @@ http.createServer((req, res) => {
     }
     
     // This will create the path for the files
-    const filePath = path.join(servingDirectory, req.url);
-
+    const filePath = path.join(servingDirectory, path.normalize(req.url));
+    
     // Create a timestamp for logging
     const timestamp = new Date().toISOString();
     // Get the HTTP version
