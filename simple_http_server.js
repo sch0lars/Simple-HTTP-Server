@@ -125,7 +125,7 @@ http.createServer((req, res) => {
                         res.end();
 
 			// Log the response
-			console.log(`[RESPONSE]\t${timestamp}\tHTTP/${httpRequestVersion} 200 OK`)
+			console.log(`[RESPONSE]\t${timestamp}\tHTTP/${httpRequestVersion} 200 OK`);
                     }
                 });
             } else { // Otherwise, we are serving a file
@@ -182,7 +182,7 @@ http.createServer((req, res) => {
 		// Pipe the file stream to the response stream
 		fileStream.pipe(res);
 		// Log the response
-		console.log(`[RESPONSE]\t${timestamp}\tHTTP/${httpRequestVersion} 200 OK`)
+		console.log(`[RESPONSE]\t${timestamp}\tHTTP/${httpRequestVersion} 200 OK`);
             }
         }
     });
